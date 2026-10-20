@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">HM Motors</title>
+  <rect x="3" y="3" width="58" height="58" rx="13" fill="#07182b" stroke="#c4d4e4" stroke-width="2"/>
+  <path d="M13 48h38" stroke="#1769a6" stroke-width="3" stroke-linecap="round"/>
+  <text x="32" y="40" text-anchor="middle" fill="#f7f9fc" font-family="Arial, sans-serif" font-size="25" font-weight="700" letter-spacing="-1">HM</text>
+</svg>

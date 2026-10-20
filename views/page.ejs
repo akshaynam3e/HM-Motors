@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07182b">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title><%= title %></title>
+  <meta name="description" content="<%= description %>">
+  <% if (keywords) { %><meta name="keywords" content="<%= keywords %>"><% } %>
+  <% if (canonical) { %><link rel="canonical" href="<%= canonical %>"><meta property="og:url" content="<%= canonical %>"><% } %>
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="<%= title %>">
+  <meta property="og:description" content="<%= description %>">
+  <meta property="og:site_name" content="<%= brand %>">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="<%= title %>">
+  <meta name="twitter:description" content="<%= description %>">
+  <% if (noindex) { %><meta name="robots" content="noindex, nofollow"><% } %>
+  <% if (jsonLd) { %><script nonce="<%= cspNonce %>" type="application/ld+json"><%- jsonLd %></script><% } %>
+  <link rel="stylesheet" href="/css/site.css">
+  <script defer src="/js/emi.js"></script>
+  <script defer src="/js/site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="wordmark" href="/" aria-label="<%= brand %> home"><span class="wordmark__mark" aria-hidden="true">HM</span><span><%= settings.site_name || 'HM Motors' %><small>SCOOTY · BIKE · CAR · <%= settings.locality %></small></span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">Menu</button>
+    <nav id="primary-navigation" class="primary-nav" aria-label="Main navigation">
+      <a href="/vehicles">Browse</a><a href="/scooters">Scooty</a><a href="/motorcycles">Bike</a><a href="/cars">Car</a><a href="/new">New</a><a href="/pre-owned">Second-hand</a>
+      <a class="nav-cta" href="/enquiry">Help me choose</a>
+    </nav>
+  </header>
+  <main id="main"><%- content %></main>
+  <footer class="site-footer">
+    <div class="footer-top"><div><a class="wordmark wordmark--footer" href="/"><span class="wordmark__mark" aria-hidden="true">HM</span><span><%= settings.site_name || 'HM Motors' %><small>SCOOTY · BIKE · CAR · <%= settings.locality %></small></span></a><p class="footer-copy">Vehicle details and availability are maintained by showroom staff. Confirm before travelling.</p></div><div><p class="eyebrow">EXPLORE</p><a href="/vehicles">All vehicles</a><a href="/new">New vehicles</a><a href="/pre-owned">Second-hand vehicles</a><a href="/scooters">Scooty</a><a href="/motorcycles">Bike</a><a href="/cars">Car</a><a href="/emi-calculator">EMI estimate</a><a href="/finance">Finance enquiry</a><a href="/exchange">Exchange enquiry</a><a href="/enquiry">Ask a question</a><a href="/faq">FAQs</a><a href="/contact">Contact &amp; directions</a><% if (settings.service_enabled === 'true') { %><a href="/service">Service information</a><% } %></div><div><p class="eyebrow">INFORMATION</p><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/disclaimer">Disclaimers</a><% if (settings.public_phone) { %><a href="tel:<%= settings.public_phone.replace(/[^+\d]/g,'') %>" data-track="call_click">Call <%= settings.public_phone %></a><% } %><% if (settings.whatsapp_number) { %><a href="https://wa.me/<%= settings.whatsapp_number.replace(/\D/g,'') %>" data-track="whatsapp_click" target="_blank" rel="noopener noreferrer">WhatsApp</a><% } %></div></div>
+    <div class="footer-bottom"><span>© <%= new Date().getFullYear() %> <%= settings.site_name || 'HM Motors' %></span><span>Prices, specifications and stock should be confirmed with the showroom.</span></div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,35 @@
+{
+  "name": "hm-motors-showroom",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HM Motors catalogue for Scooty, Bike and Car listings with New and Second-hand filters and a secure multi-admin portal",
+  "type": "commonjs",
+  "packageManager": "npm@10.9.2",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "create-owner": "node scripts/create-owner.js",
+    "reset-admin-password": "node scripts/reset-admin-password.js",
+    "backup": "node scripts/backup.js",
+    "purge-closed": "node scripts/purge-closed-enquiries.js",
+    "check": "node --check server.js && node --check src/db.js && node --check src/session-store.js && node --check src/auth.js && node --check src/validation.js && node --check src/routes/public.js && node --check src/routes/api-public.js && node --check src/routes/api-admin.js && node --check public/js/site.js && node --check public/js/admin.js && node --check public/js/emi.js && node --check scripts/create-owner.js && node --check scripts/reset-admin-password.js && node --check scripts/backup.js && node --check scripts/purge-closed-enquiries.js && node --check test/core.test.js && node --check test/vehicle-migration.test.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.8.1",
+    "csv-parse": "^7.0.3",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "multer": "^2.4.0",
+    "sharp": "^0.35.5",
+    "zod": "^3.24.2"
+  }
+}

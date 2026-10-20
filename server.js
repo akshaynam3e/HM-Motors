@@ -42,7 +42,7 @@ const cookieName='showroom_admin_session';
 const sessionStore=new BetterSqliteSessionStore(storageDir);
 app.use(session({
   name:cookieName,secret:sessionSecret,resave:false,saveUninitialized:false,rolling:true,
-  proxy:mode==='preview',
+  proxy:mode==='preview'||trustProxyHops>0,
   store:sessionStore,
   cookie:{httpOnly:true,secure,sameSite,maxAge:8*60*60*1000,path:'/'},
 }));

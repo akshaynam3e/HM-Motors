@@ -6,6 +6,7 @@ const session = require('express-session');
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
 const { db, storageDir, now, audit } = require('./src/db');
+const { bootstrapOwnerFromEnvironment } = require('./scripts/bootstrap-owner');
 const BetterSqliteSessionStore = require('./src/session-store');
 const { csrfToken, requireCsrf, login } = require('./src/auth');
 const { publicRouter } = { publicRouter: require('./src/routes/public') };
@@ -108,7 +109,16 @@ app.use((error,req,res,next)=>{
   const s=require('./src/db').getSettings();
   res.status(status>=400&&status<600?status:500).render('page',{settings:s,brand:s.site_name||'HM Motors',title:'Something went wrong',description:'The page could not be loaded.',canonical:'',path:req.path,noindex:true,keywords:'',jsonLd:'',content:'<section class="page-intro"><p class="eyebrow">SERVICE UNAVAILABLE</p><h1>We could not load that page.</h1><p>Please try again later or contact the showroom using its verified details.</p><a class="button" href="/">Return home</a></section>'});
 });
-const server=app.listen(port,'0.0.0.0',()=>console.log(`Showroom website listening on port ${port} (${mode} cookie mode).`));
-function shutdown(){server.close(()=>{try{sessionStore.close();db.close();}finally{process.exit(0);}});setTimeout(()=>process.exit(1),10000).unref();}
+let server;
+async function startServer() {
+  await bootstrapOwnerFromEnvironment();
+  server = app.listen(port,'0.0.0.0',()=>console.log(`Showroom website listening on port ${port} (${mode} cookie mode).`));
+}
+function shutdown(){
+  const finish=()=>{try{sessionStore.close();db.close();}finally{process.exit(0);}};
+  if(server)server.close(finish);else finish();
+  setTimeout(()=>process.exit(1),10000).unref();
+}
 process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);
+startServer().catch((error)=>{console.error(`Startup failed: ${error.message}`);try{sessionStore.close();db.close();}finally{process.exit(1);}});
 module.exports=app;

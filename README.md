@@ -37,7 +37,9 @@ npm test
 npm start
 ```
 
-The site listens on port 3000 by default. Open `/` for the public website. Initially there are no admin accounts; the `/admin` page explains how to create the owner. In a second terminal, run `npm run create-owner` and follow its prompts. Password keystrokes are hidden. Use an interactive TTY; do not put passwords in shell command arguments, chat, logs or environment files. Then manually visit `http://localhost:3000/admin` and sign in.
+The site listens on port 3000 by default. Open `/` for the public website. Initially there are no admin accounts; the `/admin` page explains how to create the owner. For a normal server, run `npm run create-owner` interactively as described below. For a host such as Render where Shell access is unavailable, use the optional first-start owner bootstrap: in the host dashboard's private Environment settings, set `OWNER_NAME`, `OWNER_EMAIL`, and `OWNER_PASSWORD` (all three are required). On the next deploy/restart, the application creates the owner only if the database has no owner yet. No Shell command is needed. The password is hashed before storage and is never printed. After provisioning, remove the three bootstrap variables from the host settings and sign in at `/admin`; the existing owner account remains in the database. Never add actual credentials to `.env.example`, source code, or GitHub. If an owner already exists, bootstrap does not change it.
+
+**Render storage warning:** this application uses a local SQLite database and local uploads. A host's ephemeral filesystem may lose those on restart, redeploy, or sleep. Owner bootstrap can recreate an initial account if an empty database returns, but it cannot restore inventory, enquiries, settings, uploads, or analytics that were lost. Confirm persistent storage is available for the selected host/plan and configure backups before handling real customer records.
 
 For development, `npm run dev` restarts on source changes. Never use live customer information in local development. `storage/` contains the database, sessions and images and must not be committed or copied into the source ZIP.
 

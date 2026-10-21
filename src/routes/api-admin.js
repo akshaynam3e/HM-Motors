@@ -14,7 +14,7 @@ const { vehicleSchema, offerSchema, safeSlug, parseSettings, csvSafe, escapeHtml
 
 const router = express.Router();
 router.use(requireAdmin);
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024, files: 1 } });
 const statics = path.join(storageDir, 'uploads');
 fs.mkdirSync(statics, { recursive: true, mode: 0o700 });
 function removeIfUnreferenced(imagePath) {
@@ -129,20 +129,28 @@ router.post('/vehicles/import.csv',requireCsrf,upload.single('file'),(req,res)=>
 });
 
 const imageUpload = upload.single('image');
-router.post('/uploads/vehicle-image',requireCsrf,(req,res,next)=>imageUpload(req,res,(err)=>err?sendError(res,400,'Image must be a JPEG, PNG, or WebP up to 5 MB.'):next()),async(req,res)=>{
-  if(!req.file)return sendError(res,400,'Choose a JPEG, PNG, or WebP image.');
+const supportedRasterFormats = new Set(['jpeg','png','webp','gif','tiff','heif']);
+router.get('/uploads/vehicle-image/:filename',(req,res,next)=>{
+  const filename=req.params.filename;
+  if(!/^[a-f0-9-]{36}\.webp$/i.test(filename))return sendError(res,404,'Image not found.');
+  const file=path.join(statics,filename);
+  fs.stat(file,(error)=>{
+    if(error)return sendError(res,404,'Image preview is no longer available.');
+    res.type('image/webp').set('Cache-Control','private, no-store').sendFile(file,(sendErrorValue)=>{if(sendErrorValue)next(sendErrorValue);});
+  });
+});
+router.post('/uploads/vehicle-image',requireCsrf,(req,res,next)=>imageUpload(req,res,(err)=>err?sendError(res,400,'Choose a supported photo up to 12 MB. Accepted: JPEG, PNG, WebP, GIF, AVIF/HEIC, or TIFF. SVG and non-photo files are not accepted.'):next()),async(req,res)=>{
+  if(!req.file)return sendError(res,400,'Choose a supported photo. Accepted: JPEG, PNG, WebP, GIF, AVIF/HEIC, or TIFF (up to 12 MB).');
   const imageProcessor=getSharp();if(!imageProcessor)return sendError(res,503,'Image optimization is unavailable on this device. The site can still run; use a supported Linux server to enable product-image uploads.');
-  const b=req.file.buffer;let ext='';
-  if(b.length>=3&&b[0]===0xff&&b[1]===0xd8&&b[2]===0xff)ext='jpg';
-  else if(b.length>=8&&b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))ext='png';
-  else if(b.length>=12&&b.toString('ascii',0,4)==='RIFF'&&b.toString('ascii',8,12)==='WEBP')ext='webp';
-  if(!ext)return sendError(res,400,'The file contents are not a supported JPEG, PNG, or WebP image.');
+  const b=req.file.buffer;
   try{
-    const optimized=await imageProcessor(b,{failOn:'error',limitInputPixels:30000000}).rotate().resize({width:1600,height:1200,fit:'inside',withoutEnlargement:true}).webp({quality:82,effort:4}).toBuffer();
-    const name=`${crypto.randomUUID()}.webp`;fs.writeFileSync(path.join(statics,name),optimized,{flag:'wx',mode:0o640});audit(req.admin.id,'IMAGE_UPLOADED','asset',name,{inputBytes:b.length,outputBytes:optimized.length,format:'webp'});res.status(201).json({path:`/uploads/${name}`});
+    const input=imageProcessor(b,{failOn:'error',limitInputPixels:30000000,pages:1});
+    const metadata=await input.metadata();
+    if(!supportedRasterFormats.has(metadata.format))return sendError(res,400,'Unsupported image format. Use JPEG, PNG, WebP, GIF, AVIF/HEIC, or TIFF. SVG and non-photo files are not accepted.');
+    const optimized=await imageProcessor(b,{failOn:'error',limitInputPixels:30000000,pages:1}).rotate().resize({width:1600,height:1200,fit:'inside',withoutEnlargement:true}).webp({quality:82,effort:2}).toBuffer();
+    const name=`${crypto.randomUUID()}.webp`;fs.writeFileSync(path.join(statics,name),optimized,{flag:'wx',mode:0o640});audit(req.admin.id,'IMAGE_UPLOADED','asset',name,{inputBytes:b.length,outputBytes:optimized.length,format:metadata.format});res.status(201).json({path:`/uploads/${name}`,previewUrl:`/api/admin/uploads/vehicle-image/${name}`,format:metadata.format,bytes:optimized.length});
   }catch(error){if(sharpUnavailable(error))return sendError(res,503,'Image optimization is unavailable on this device. The site can still run; use a supported Linux server to enable product-image uploads.');return sendError(res,400,'The uploaded image could not be decoded or optimized.');}
 });
-
 router.delete('/uploads/vehicle-image/:filename',requireCsrf,(req,res)=>{const filename=req.params.filename;if(!/^[a-f0-9-]{36}\.webp$/i.test(filename))return sendError(res,404,'Image not found.');const imagePath=`/uploads/${filename}`;if(db.prepare('SELECT 1 FROM vehicles WHERE image_path=? LIMIT 1').get(imagePath))return sendError(res,409,'This image is still attached to a vehicle listing.');const deleted=removeIfUnreferenced(imagePath);if(deleted)audit(req.admin.id,'UNUSED_IMAGE_DELETED','asset',filename);return res.json({ok:true,deleted});});
 router.get('/offers',(req,res)=>res.json({offers:db.prepare('SELECT * FROM offers ORDER BY updated_at DESC LIMIT 200').all()}));
 router.post('/offers',requireCsrf,(req,res)=>{const p=offerSchema.safeParse(req.body);if(!p.success)return sendError(res,400,p.error.issues[0].message);const d=p.data,id=crypto.randomUUID(),t=now();db.prepare('INSERT INTO offers(id,title,description,terms,starts_at,ends_at,published,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)').run(id,d.title,d.description,d.terms,d.startsAt||null,d.endsAt||null,d.published?1:0,t,t);audit(req.admin.id,'OFFER_CREATED','offer',id,{published:d.published});res.status(201).json({offer:db.prepare('SELECT * FROM offers WHERE id=?').get(id)});});

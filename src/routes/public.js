@@ -12,13 +12,43 @@ const sitePaths = [
   ['/privacy', 'Privacy policy'], ['/terms', 'Terms and conditions'], ['/disclaimer', 'Disclaimers'],
 ];
 const ownerName = (s) => s.site_name || 'HM Motors';
+const seoKeywords = {
+  '/': ['vehicle showroom in Bhurkunda, Ramgarh','HM Motors Bhurkunda','vehicle listings Ramgarh Jharkhand'],
+  '/vehicles': ['vehicles in Bhurkunda','vehicle showroom Ramgarh','scooty bike car listings Jharkhand'],
+  '/new': ['new vehicles Bhurkunda','new scooty bike car Ramgarh','HM Motors new vehicle listings'],
+  '/pre-owned': ['second hand vehicles Bhurkunda','used vehicles Ramgarh Jharkhand','pre-owned bike and car listings'],
+  '/scooters': ['scooter showroom in Bhurkunda, Ramgarh','scooty showroom Bhurkunda','scooter listings Ramgarh Jharkhand'],
+  '/motorcycles': ['motorcycle showroom in Bhurkunda, Ramgarh','bike showroom Bhurkunda Jharkhand','motorcycle listings Ramgarh'],
+  '/cars': ['car showroom in Bhurkunda, Ramgarh','car listings Ramgarh Jharkhand','HM Motors cars Bhurkunda'],
+  '/about': ['HM Motors Bhurkunda','vehicle showroom Ramgarh'],
+  '/contact': ['HM Motors contact Bhurkunda','vehicle showroom directions Ramgarh'],
+  '/faq': ['vehicle buying questions Bhurkunda','HM Motors vehicle listings FAQ'],
+  '/compare': ['compare vehicles Bhurkunda','compare showroom listings Ramgarh'],
+  '/emi-calculator': ['vehicle EMI calculator India','two-wheeler car EMI estimate'],
+  '/offers': ['vehicle offers Bhurkunda','HM Motors current offers Ramgarh'],
+  '/test-ride': ['vehicle test ride request Bhurkunda','bike test ride Ramgarh'],
+  '/finance': ['vehicle finance enquiry Bhurkunda','vehicle loan questions Ramgarh'],
+  '/exchange': ['vehicle exchange enquiry Bhurkunda','car bike exchange Ramgarh'],
+  '/enquiry': ['vehicle enquiry Bhurkunda','ask HM Motors Ramgarh'],
+  '/service': ['vehicle service information Bhurkunda','HM Motors after-sales Ramgarh'],
+};
+function businessSchema(s, origin) {
+  if (!origin || !s.address_line || !s.locality || !s.state || !s.public_phone) return null;
+  const postalAddress = {
+    '@type':'PostalAddress', streetAddress:s.address_line, addressLocality:s.locality,
+    addressRegion:s.state, addressCountry:'IN', ...(s.postal_code ? {postalCode:s.postal_code} : {}),
+  };
+  return {'@context':'https://schema.org','@type':'AutoDealer','@id':`${origin}/#business`,name:ownerName(s),url:origin,telephone:s.public_phone,address:postalAddress,...(s.map_url?{hasMap:s.map_url}:{})};
+}
 function page(res, s, title, description, content, options = {}) {
   const origin = (s.public_base_url || '').replace(/\/$/, '');
+  const image = origin && options.imagePath ? `${origin}${options.imagePath}` : '';
   res.render('page', {
     settings: s, brand: ownerName(s), title: `${title} | ${ownerName(s)}`,
     description, canonical: origin ? `${origin}${options.path || '/'}` : '',
     path: options.path || '/', noindex: Boolean(options.noindex), content,
-    keywords: 'HM Motors Bhurkunda, scooters, bikes, cars, new vehicles, second-hand vehicles, Ramgarh',
+    keywords: (options.keywords || seoKeywords[options.path || '/'] || ['HM Motors', 'Bhurkunda', 'Ramgarh']).join(', '),
+    socialImage: image, twitterCard: image ? 'summary_large_image' : 'summary',
     jsonLd: options.jsonLd ? safeJson(options.jsonLd) : '',
   });
 }
@@ -65,13 +95,14 @@ router.get('/', (req, res) => {
     { key:'MOTORCYCLE', label:'Bike', href:'/motorcycles', note:'Compare bikes' },
     { key:'CAR', label:'Car', href:'/cars', note:'Find a car' },
   ].map((item, index) => `<a class="shop-category-card" href="${item.href}"><span class="shop-category-card__index">0${index + 1}</span><span class="shop-category-card__count">${Number(counts[item.key] || 0)} listed</span><strong>${item.label}</strong><small>${item.note}</small><span class="shop-category-card__arrow" aria-hidden="true">→</span></a>`).join('');
-  const content = `<section class="shop-hero"><div class="shop-hero__copy"><p class="eyebrow">HM MOTORS · BHURKUNDA · RAMGARH</p><h1>Find your next vehicle, without knowing the exact model.</h1><p>Start with Scooty, Bike, or Car. Browse real showroom listings and ask us to help narrow down your options.</p><div class="shop-hero-actions"><a class="button" href="/vehicles">Browse all listings</a><a class="shop-help" href="/enquiry">Help me choose →</a></div></div><div class="shop-hero__side"><span class="shop-hero__mark" aria-hidden="true">HM</span><p>Browse first.<br>Choose with confidence.</p></div></section>
+  const content = `<section class="shop-hero"><div class="shop-hero__copy"><p class="eyebrow">HM MOTORS · BHURKUNDA · RAMGARH</p><h1>Scooty, Bike &amp; Car listings in ${e(s.locality || 'Bhurkunda')}, ${e(s.district || 'Ramgarh')}</h1><p>Start with Scooty, Bike, or Car. Browse real showroom listings and ask us to help narrow down your options.</p><div class="shop-hero-actions"><a class="button" href="/vehicles">Browse all listings</a><a class="shop-help" href="/enquiry">Help me choose →</a></div></div><div class="shop-hero__side"><span class="shop-hero__mark" aria-hidden="true">HM</span><p>Browse first.<br>Choose with confidence.</p></div></section>
   <section class="shop-section"><div class="section-heading"><div><p class="eyebrow">START HERE</p><h2>Shop by vehicle type</h2><p class="section-lead">Choose a section to see what's listed. No model name required.</p></div><a class="text-link" href="/vehicles">Browse all vehicles →</a></div><div class="shop-category-grid">${categoryCards}</div></section>
   <section class="condition-section"><div><p class="eyebrow">CHOOSE CONDITION</p><h2>New or second-hand?</h2><p>Filter every category by the condition that suits you.</p></div><div class="condition-choice-grid"><a href="/new"><span>01</span><strong>New</strong><small>Browse new listings</small><b aria-hidden="true">→</b></a><a href="/pre-owned"><span>02</span><strong>Second-hand</strong><small>Browse second-hand listings</small><b aria-hidden="true">→</b></a></div></section>
   <section class="content-section"><div class="section-heading"><div><p class="eyebrow">SHOWROOM LISTINGS</p><h2>Featured vehicles</h2></div><a class="text-link" href="/vehicles">See all listings →</a></div>${featured.length ? `<div class="vehicle-grid">${featured.map(card).join('')}</div>` : '<div class="empty-state"><h3>Listings will appear here once published</h3><p>HM Motors has not published inventory yet. We never show sample vehicles or invented prices. Browse a category, or ask us to help you choose.</p><a class="button button--outline" href="/enquiry">Ask HM Motors for help</a></div>'}</section>
   <section class="offers-strip"><div><p class="eyebrow">CURRENT OFFERS</p><h2>Only verified offers are published.</h2></div>${activeOffers.length ? `<ul>${activeOffers.map((o) => `<li><strong>${e(o.title)}</strong><span>${e(o.description || o.terms || 'Ask the showroom for conditions.')}</span></li>`).join('')}</ul>` : '<p>No current offer has been published by the showroom.</p>'}<a class="text-link" href="/offers">View offer details →</a></section>
   <section class="contact-cta"><div><p class="eyebrow">NEED A HAND?</p><h2>Tell us what you need. We’ll help you compare.</h2><p>You can send a general enquiry without choosing a make or model. A test-drive request is only confirmed after staff contact you.</p></div><div class="hero-actions"><a class="button" href="/enquiry">Help me choose</a><a class="button button--outline" href="/contact">Contact HM Motors</a></div></section>`;
-  page(res, s, 'Scooty, bikes and cars', 'Browse Scooty, Bike and Car listings at HM Motors in Bhurkunda. Choose a vehicle type and New or Second-hand condition.', content, { path: '/' });
+  const area = [s.locality || 'Bhurkunda', s.district || 'Ramgarh'].filter(Boolean).join(', ');
+  page(res, s, `Scooty, bikes and cars in ${area}`, `Browse new and second-hand Scooty, Bike and Car listings at HM Motors in ${area}, Jharkhand. Confirm current price and availability with the showroom.`, content, { path:'/', jsonLd:businessSchema(s,(s.public_base_url||'').replace(/\/$/,'')) });
 });
 
 function listingRoute(path, fixedCategory, title, defaultCondition='') {
@@ -120,11 +151,14 @@ function listingRoute(path, fixedCategory, title, defaultCondition='') {
     const filters = `<section class="catalogue-controls" aria-label="Browse listings"><div class="browse-filter-block"><p class="filter-heading">Vehicle type</p><nav class="filter-pills" aria-label="Choose vehicle type">${categoryLinks}</nav></div><div class="browse-filter-block"><p class="filter-heading">Condition</p><nav class="filter-pills" aria-label="Choose New or Second-hand">${conditionLinks}</nav></div></section>`;
     const query = new URLSearchParams(req.query); query.delete('page');
     const pagination = pageCount > 1 ? `<nav class="pagination" aria-label="Vehicle catalogue pages">${currentPage>1?`<a class="button button--outline button--small" href="${e(path)}?${e(new URLSearchParams({...Object.fromEntries(query),page:String(currentPage-1)}).toString())}">Previous</a>`:''}<span>Page ${currentPage} of ${pageCount} · ${total} listings</span>${currentPage<Math.min(pageCount,1000)?`<a class="button button--outline button--small" href="${e(path)}?${e(new URLSearchParams({...Object.fromEntries(query),page:String(currentPage+1)}).toString())}">Next</a>`:''}</nav>` : '';
-    const heading = `<section class="page-intro"><p class="eyebrow">HM MOTORS CATALOGUE</p><h1>${e(title)}</h1><p>Browse actual showroom listings by type and condition. No model search needed. Prices, details and availability must be confirmed before travelling.</p></section>`;
+    const area = [s.locality || 'Bhurkunda', s.district || 'Ramgarh'].filter(Boolean).join(', ');
+    const categoryText = ({'/scooters':'Scooty and scooters','/motorcycles':'Bikes and motorcycles','/cars':'Cars','/new':'New vehicles','/pre-owned':'Second-hand vehicles','/vehicles':'Vehicles'})[path] || title;
+    const localTitle = `${categoryText} in ${area}`;
+    const heading = `<section class="page-intro"><p class="eyebrow">HM MOTORS CATALOGUE · ${e(area.toUpperCase())}</p><h1>${e(localTitle)}</h1><p>Browse showroom-published listings by type and condition. No model search needed. Confirm prices, details and availability with the showroom before travelling.</p></section>`;
     const summary = `<div class="results-summary" role="status">${vehicles.length} of ${total} ${total===1?'listing':'listings'} shown${selectedCategory ? ` · ${e(categoryName(selectedCategory))}` : ''}${condition ? ` · ${e(conditionName({condition}))}` : ''}</div>`;
     const empty = `<div class="empty-state"><h2>No published listings match these filters</h2><p>Try another category or condition, clear the filters, or ask HM Motors to help you find a suitable option.</p><a class="button button--outline" href="/enquiry">Help me choose</a></div>`;
     const content = `${heading}${filters}${summary}${vehicles.length ? `${pagination}<div class="vehicle-grid">${vehicles.map(card).join('')}</div>${pagination}` : empty}`;
-    page(res, s, title, `Browse ${title.toLowerCase()} at HM Motors, Bhurkunda. View Scooty, bikes and cars and filter by new or second-hand condition.`, content, { path });
+    page(res, s, localTitle, `Browse ${categoryText.toLowerCase()} listings at HM Motors in ${area}, Jharkhand. Filter published vehicles by category or condition, then confirm details with the showroom.`, content, { path, keywords:seoKeywords[path] });
   });
 }
 listingRoute('/vehicles', null, 'All vehicles');
@@ -146,7 +180,9 @@ router.get('/vehicles/:slug', (req, res, next) => {
   const origin = (s.public_base_url || '').replace(/\/$/, '');
   const schemaAvailability={IN_STOCK:'InStock',LIMITED:'LimitedAvailability',OUT_OF_STOCK:'OutOfStock',DISCONTINUED:'Discontinued'}[v.availability];
   const jsonLd = origin ? { '@context':'https://schema.org','@type':'Product',name,category:`${conditionName(v)} ${categoryName(v.category)}`,description:v.description || undefined,brand:{'@type':'Brand',name:v.brand},image:v.image_path ? `${origin}${v.image_path}` : undefined,offers:v.price_verified && v.ex_showroom_price>0 && schemaAvailability ? {'@type':'Offer',price:v.ex_showroom_price,priceCurrency:'INR',availability:`https://schema.org/${schemaAvailability}`,url:`${origin}/vehicles/${v.slug}`} : undefined } : null;
-  page(res, s, name, `${name}: view showroom-provided specifications and ask about current price or availability.`, content, { path:`/vehicles/${v.slug}`, jsonLd });
+  const area = [s.locality || 'Bhurkunda', s.district || 'Ramgarh'].filter(Boolean).join(', ');
+  const vehicleTitle = `${name} — ${conditionName(v)} ${categoryName(v.category)} in ${s.locality || 'Bhurkunda'}`;
+  page(res, s, vehicleTitle, `${name} (${conditionName(v)} ${categoryName(v.category)}) listed by HM Motors in ${area}. Check showroom-provided specifications and confirm current price and availability.`, content, { path:`/vehicles/${v.slug}`, jsonLd, imagePath:v.image_path, keywords:[name,`${conditionName(v)} ${categoryName(v.category)} ${s.locality||'Bhurkunda'}`,`${categoryName(v.category)} ${s.district||'Ramgarh'}`] });
 });
 
 router.get('/compare', (req, res) => page(res, getSettings(), 'Compare vehicles', 'Compare up to three showroom-listed vehicles using information supplied by the showroom.', `<section class="page-intro"><p class="eyebrow">MAKE AN INFORMED CHOICE</p><h1>Compare listed vehicles</h1><p>Select up to three vehicles from the catalogue. Only information supplied by the showroom is shown.</p></section><div id="compare-content" class="compare-content" aria-live="polite"><p class="empty-state">No vehicles selected for comparison.</p><a class="button" href="/vehicles">Browse vehicles</a></div>`, { path:'/compare' }));
@@ -202,7 +238,8 @@ router.get('/robots.txt',(req,res)=>{
 router.get('/sitemap.xml',(req,res)=>{
   const s=getSettings(); const origin=(s.public_base_url||'').replace(/\/$/,'');
   if(!origin) return res.status(503).type('text/plain').send('Sitemap is available after the owner configures the canonical HTTPS website URL.');
-  const entries=[...sitePaths.filter(([p])=>p!=='/service'),... (s.service_enabled==='true'?[['/service','Service']]:[])].map(([p])=>`${origin}${p}`);
+  const indexablePaths=new Set(['/','/vehicles','/new','/pre-owned','/scooters','/motorcycles','/cars','/offers','/about','/contact','/faq']);
+  const entries=[...sitePaths.filter(([p])=>indexablePaths.has(p)),... (s.service_enabled==='true'?[['/service','Service']]:[])].map(([p])=>`${origin}${p}`);
   const slugs=db.prepare('SELECT slug FROM vehicles WHERE published=1 ORDER BY slug').all();
   for(const row of slugs) entries.push(`${origin}/vehicles/${encodeURIComponent(row.slug)}`);
   const body='<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+entries.map((url)=>`<url><loc>${e(url)}</loc></url>`).join('')+'</urlset>';

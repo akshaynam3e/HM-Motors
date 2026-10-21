@@ -10,12 +10,15 @@
   <% if (keywords) { %><meta name="keywords" content="<%= keywords %>"><% } %>
   <% if (canonical) { %><link rel="canonical" href="<%= canonical %>"><meta property="og:url" content="<%= canonical %>"><% } %>
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_IN">
   <meta property="og:title" content="<%= title %>">
   <meta property="og:description" content="<%= description %>">
   <meta property="og:site_name" content="<%= brand %>">
-  <meta name="twitter:card" content="summary">
+  <% if (socialImage) { %><meta property="og:image" content="<%= socialImage %>"><% } %>
+  <meta name="twitter:card" content="<%= twitterCard || 'summary' %>">
   <meta name="twitter:title" content="<%= title %>">
   <meta name="twitter:description" content="<%= description %>">
+  <% if (socialImage) { %><meta name="twitter:image" content="<%= socialImage %>"><% } %>
   <% if (noindex) { %><meta name="robots" content="noindex, nofollow"><% } %>
   <% if (jsonLd) { %><script nonce="<%= cspNonce %>" type="application/ld+json"><%- jsonLd %></script><% } %>
   <link rel="stylesheet" href="/css/site.css">

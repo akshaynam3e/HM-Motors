@@ -99,7 +99,7 @@ app.use('/',publicRouter);
 app.use(express.static(path.join(__dirname,'public'),{index:false,fallthrough:true,dotfiles:'deny',etag:true,maxAge:process.env.NODE_ENV==='production'?'1h':0}));
 app.use((req,res)=>{
   const s=require('./src/db').getSettings();
-  res.status(404).render('page',{settings:s,brand:s.site_name||'HM Motors',title:'Page not found',description:'The requested page could not be found.',canonical:'',path:req.path,noindex:true,keywords:'',jsonLd:'',content:'<section class="page-intro"><p class="eyebrow">404</p><h1>That page could not be found.</h1><p>The link may be incorrect or the listing may have been removed.</p><a class="button" href="/vehicles">Browse current listings</a></section>'});
+  res.status(404).render('page',{settings:s,brand:s.site_name||'HM Motors',title:'Page not found',description:'The requested page could not be found.',canonical:'',path:req.path,noindex:true,keywords:'',socialImage:'',twitterCard:'summary',jsonLd:'',content:'<section class="page-intro"><p class="eyebrow">404</p><h1>That page could not be found.</h1><p>The link may be incorrect or the listing may have been removed.</p><a class="button" href="/vehicles">Browse current listings</a></section>'});
 });
 app.use((error,req,res,next)=>{
   if(res.headersSent)return next(error);
@@ -107,7 +107,7 @@ app.use((error,req,res,next)=>{
   const status=error.statusCode||error.status||500;
   if(req.path.startsWith('/api/'))return res.status(status>=400&&status<600?status:500).json({error:status===413?'Request is too large.':'The request could not be completed.'});
   const s=require('./src/db').getSettings();
-  res.status(status>=400&&status<600?status:500).render('page',{settings:s,brand:s.site_name||'HM Motors',title:'Something went wrong',description:'The page could not be loaded.',canonical:'',path:req.path,noindex:true,keywords:'',jsonLd:'',content:'<section class="page-intro"><p class="eyebrow">SERVICE UNAVAILABLE</p><h1>We could not load that page.</h1><p>Please try again later or contact the showroom using its verified details.</p><a class="button" href="/">Return home</a></section>'});
+  res.status(status>=400&&status<600?status:500).render('page',{settings:s,brand:s.site_name||'HM Motors',title:'Something went wrong',description:'The page could not be loaded.',canonical:'',path:req.path,noindex:true,keywords:'',socialImage:'',twitterCard:'summary',jsonLd:'',content:'<section class="page-intro"><p class="eyebrow">SERVICE UNAVAILABLE</p><h1>We could not load that page.</h1><p>Please try again later or contact the showroom using its verified details.</p><a class="button" href="/">Return home</a></section>'});
 });
 let server;
 async function startServer() {
